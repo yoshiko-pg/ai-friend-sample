@@ -1,0 +1,1 @@
+mastraの仕様はmastra-docs mcpにきいて

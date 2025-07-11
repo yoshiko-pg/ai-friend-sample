@@ -1,15 +1,58 @@
 "use client";
 
 import { useChat } from "@ai-sdk/react";
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
+
+interface HistoryMessage {
+  id?: string;
+  role: "user" | "assistant";
+  content: { type: string; text: string }[];
+  createdAt?: string | Date;
+}
 
 export default function Chat() {
-  const { messages, input, handleInputChange, handleSubmit, isLoading } = useChat({
+  const [isLoadingHistory, setIsLoadingHistory] = useState(true);
+  const {
+    messages,
+    input,
+    handleInputChange,
+    handleSubmit,
+    setMessages,
+    isLoading,
+  } = useChat({
     api: "/api/chat",
     id: "fixed-thread-id",
   });
 
   const messagesEndRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const loadHistory = async () => {
+      try {
+        const response = await fetch("/api/chat/history");
+        const data = await response.json();
+
+        console.log(data.messages);
+        if (data.messages && data.messages.length > 0) {
+          const formattedMessages = data.messages.map(
+            (msg: HistoryMessage) => ({
+              id: msg.id || String(Date.now() + Math.random()),
+              role: msg.role,
+              content: msg.content.map((c) => c.text).join(""),
+              createdAt: msg.createdAt || new Date(),
+            }),
+          );
+          setMessages(formattedMessages);
+        }
+      } catch (error) {
+        console.error("Failed to load chat history:", error);
+      } finally {
+        setIsLoadingHistory(false);
+      }
+    };
+
+    loadHistory();
+  }, [setMessages]);
 
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -24,7 +67,9 @@ export default function Chat() {
             友
           </div>
           <div className="ml-3">
-            <h1 className="font-semibold text-gray-800">ともだちエージェント</h1>
+            <h1 className="font-semibold text-gray-800">
+              ともだちエージェント
+            </h1>
             <p className="text-xs text-green-500">オンライン</p>
           </div>
         </div>
@@ -32,13 +77,22 @@ export default function Chat() {
 
       {/* メッセージエリア */}
       <div className="flex-1 overflow-y-auto p-4 space-y-4">
-        {messages.length === 0 && (
+        {isLoadingHistory && (
+          <div className="text-center text-gray-500 mt-10">
+            <div className="inline-flex items-center">
+              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-gray-900"></div>
+              <span className="ml-3">履歴を読み込んでいます...</span>
+            </div>
+          </div>
+        )}
+
+        {!isLoadingHistory && messages.length === 0 && (
           <div className="text-center text-gray-500 mt-10">
             <p className="text-lg mb-2">こんにちは！</p>
             <p className="text-sm">何か話しかけてみてください</p>
           </div>
         )}
-        
+
         {messages.map((message) => (
           <div
             key={message.id}
@@ -51,33 +105,47 @@ export default function Chat() {
                   : "bg-white text-gray-800 rounded-bl-sm shadow-md"
               }`}
             >
-              <p className="whitespace-pre-wrap break-words">{message.content}</p>
+              <p className="whitespace-pre-wrap break-words">
+                {message.content}
+              </p>
               <p
                 className={`text-xs mt-1 ${
                   message.role === "user" ? "text-blue-100" : "text-gray-400"
                 }`}
               >
-                {new Date().toLocaleTimeString("ja-JP", {
-                  hour: "2-digit",
-                  minute: "2-digit",
-                })}
+                {new Date(message.createdAt || new Date()).toLocaleTimeString(
+                  "ja-JP",
+                  {
+                    hour: "2-digit",
+                    minute: "2-digit",
+                  },
+                )}
               </p>
             </div>
           </div>
         ))}
-        
+
         {isLoading && (
           <div className="flex justify-start">
             <div className="bg-white text-gray-800 rounded-2xl rounded-bl-sm shadow-md px-4 py-2">
               <div className="flex space-x-2">
-                <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: "0ms" }}></div>
-                <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: "150ms" }}></div>
-                <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: "300ms" }}></div>
+                <div
+                  className="w-2 h-2 bg-gray-400 rounded-full animate-bounce"
+                  style={{ animationDelay: "0ms" }}
+                ></div>
+                <div
+                  className="w-2 h-2 bg-gray-400 rounded-full animate-bounce"
+                  style={{ animationDelay: "150ms" }}
+                ></div>
+                <div
+                  className="w-2 h-2 bg-gray-400 rounded-full animate-bounce"
+                  style={{ animationDelay: "300ms" }}
+                ></div>
               </div>
             </div>
           </div>
         )}
-        
+
         <div ref={messagesEndRef} />
       </div>
 

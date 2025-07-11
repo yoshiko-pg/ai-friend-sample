@@ -5,11 +5,10 @@ export async function POST(req: Request) {
 
   const friendAgent = mastra.getAgent("friendAgent");
 
-  const stream = await friendAgent.stream(messages, {
+  const stream = await friendAgent.stream([messages.at(-1)], {
     memory: {
       thread: "default-thread", // 任意のスレッドID
       resource: "default-user", // 任意のユーザーID
-      options: { lastMessages: 10 }, // 10メッセージを取得
     },
   });
 

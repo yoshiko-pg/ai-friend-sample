@@ -4,8 +4,8 @@ export async function GET() {
   const friendAgent = mastra.getAgent("friendAgent");
   const memory = friendAgent.getMemory();
 
-  const threadId = "default";
-  const resourceId = friendAgent.id;
+  const threadId = "default-thread";
+  const resourceId = "default-user";
   const limit = 50;
 
   if (!memory) {

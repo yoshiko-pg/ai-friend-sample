@@ -7,8 +7,8 @@ export async function POST(req: Request) {
 
   const stream = await friendAgent.stream(messages, {
     memory: {
-      thread: "default", // 任意のスレッドID
-      resource: friendAgent.id,
+      thread: "default-thread", // 任意のスレッドID
+      resource: "default-user", // 任意のユーザーID
       options: { lastMessages: 10 }, // 10メッセージを取得
     },
   });
